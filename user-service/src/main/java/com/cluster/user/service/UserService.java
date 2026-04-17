@@ -34,10 +34,6 @@ public class UserService {
         return userRepository.findById(id).map(UserService::toResponse).orElse(null);
     }
 
-    public boolean exists(Long id) {
-        return userRepository.existsById(id);
-    }
-
     private static UserResponse toResponse(User u) {
         return new UserResponse(u.getId(), u.getUsername(), u.getEmail(), u.getCreatedAt());
     }
