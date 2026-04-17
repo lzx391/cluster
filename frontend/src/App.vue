@@ -22,6 +22,11 @@ const quantity = ref(1);
 const orderResult = ref(null);
 const orderLoading = ref(false);
 
+const orderIdForPay = ref("");
+const paymentChannel = ref("MOCK");
+const paymentResult = ref(null);
+const payLoading = ref(false);
+
 function readInitialDark() {
   if (typeof localStorage === "undefined") return false;
   const saved = localStorage.getItem(THEME_KEY);
@@ -43,6 +48,12 @@ function applyDarkClass(dark) {
 }
 
 watch(isDark, applyDarkClass, { immediate: true });
+
+watch(orderResult, (v) => {
+  if (v && typeof v.id === "number") {
+    orderIdForPay.value = String(v.id);
+  }
+});
 
 onMounted(() => {
   loadProducts();
@@ -120,6 +131,33 @@ async function placeOrder() {
     orderLoading.value = false;
   }
 }
+
+async function payOrder() {
+  paymentResult.value = null;
+  const oid = Number(orderIdForPay.value);
+  if (!Number.isFinite(oid) || oid < 1) {
+    ElMessage.warning("请填写有效订单 ID（可先创建订单）");
+    return;
+  }
+  const ch = paymentChannel.value.trim();
+  if (!ch) {
+    ElMessage.warning("请填写支付渠道");
+    return;
+  }
+  payLoading.value = true;
+  try {
+    const { data } = await http.post("/api/payments", {
+      orderId: oid,
+      channel: ch,
+    });
+    paymentResult.value = data;
+    ElMessage.success("模拟支付成功");
+  } catch (e) {
+    ElMessage.error(formatError(e));
+  } finally {
+    payLoading.value = false;
+  }
+}
 </script>
 
 <template>
@@ -131,7 +169,7 @@ async function placeOrder() {
           <p class="page-sub mb-0">
             使用 <strong>Axios</strong> 请求经 Vite 代理到网关
             <el-tag size="small" type="primary">8080</el-tag>
-            。先创建用户，再下单；表格数据来自 product-service。
+            。先创建用户、下单，再模拟支付；表格数据来自 product-service。
           </p>
         </div>
         <div class="theme-switch" aria-label="主题">
@@ -208,6 +246,34 @@ async function placeOrder() {
           </el-card>
         </el-col>
       </el-row>
+
+      <el-card shadow="hover" style="margin-top: 16px">
+        <template #header>
+          <span>支付 · payment-service</span>
+        </template>
+        <el-form label-position="top" @submit.prevent>
+          <el-row :gutter="12">
+            <el-col :xs="24" :sm="8">
+              <el-form-item label="订单 ID">
+                <el-input v-model="orderIdForPay" placeholder="下单成功后自动填入" clearable />
+              </el-form-item>
+            </el-col>
+            <el-col :xs="24" :sm="8">
+              <el-form-item label="渠道（模拟）">
+                <el-input v-model="paymentChannel" placeholder="如 MOCK" clearable />
+              </el-form-item>
+            </el-col>
+            <el-col :xs="24" :sm="8">
+              <el-form-item label="操作">
+                <el-button type="success" :loading="payLoading" style="width: 100%" @click="payOrder">发起支付</el-button>
+              </el-form-item>
+            </el-col>
+          </el-row>
+        </el-form>
+        <el-alert v-if="paymentResult" type="success" :closable="false" show-icon title="支付返回" />
+        <pre v-if="paymentResult" class="json-preview">{{ JSON.stringify(paymentResult, null, 2) }}</pre>
+        <el-text v-else type="info" size="small">仅当订单状态为 CREATED 时可支付一次；成功后订单变为 PAID。</el-text>
+      </el-card>
 
       <el-card shadow="hover" style="margin-top: 16px">
         <template #header>

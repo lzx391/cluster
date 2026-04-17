@@ -30,7 +30,7 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ProductResponse> get(@PathVariable Long id) {
+    public ResponseEntity<ProductResponse> get(@PathVariable("id") Long id) {
         ProductResponse p = productService.getById(id);
         if (p == null) {
             return ResponseEntity.notFound().build();
@@ -42,7 +42,7 @@ public class ProductController {
      * 供订单服务在事务边界内扣减库存（工业场景常配合 MQ 做最终一致，此处为演示同步扣减）。
      */
     @PostMapping("/{id}/deduct-stock")
-    public ResponseEntity<Void> deduct(@PathVariable Long id, @Valid @RequestBody DeductStockRequest request) {
+    public ResponseEntity<Void> deduct(@PathVariable("id") Long id, @Valid @RequestBody DeductStockRequest request) {
         try {
             productService.deductStock(id, request);
             return ResponseEntity.noContent().build();

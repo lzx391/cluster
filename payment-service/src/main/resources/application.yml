@@ -1,11 +1,11 @@
 server:
-  port: 8082
+  port: 8084
 
 spring:
   application:
-    name: product-service
+    name: payment-service
   datasource:
-    url: jdbc:mysql://${MYSQL_HOST:127.0.0.1}:${MYSQL_PORT:3307}/product_db?useSSL=false&characterEncoding=utf8&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://${MYSQL_HOST:127.0.0.1}:${MYSQL_PORT:3307}/payment_db?useSSL=false&characterEncoding=utf8&serverTimezone=UTC&allowPublicKeyRetrieval=true
     username: ${MYSQL_USER:root}
     password: ${MYSQL_PASSWORD:root}
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -16,16 +16,18 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
-  cache:
-    type: caffeine
-    caffeine:
-      spec: maximumSize=2000,expireAfterWrite=5m
   cloud:
     nacos:
       discovery:
         server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
         namespace: ${NACOS_NAMESPACE:}
         group: DEFAULT_GROUP
+    openfeign:
+      client:
+        config:
+          default:
+            connectTimeout: 5000
+            readTimeout: 10000
 
 management:
   endpoints:
