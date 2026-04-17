@@ -1,0 +1,60 @@
+html {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  transition: background 0.28s ease;
+}
+
+html:not(.dark) body {
+  background: linear-gradient(160deg, #f0f4fb 0%, #e8eef8 45%, #dfe8f5 100%);
+}
+
+html.dark body {
+  background: linear-gradient(160deg, #0d1117 0%, #161b22 45%, #0a0c10 100%);
+}
+
+#app {
+  min-height: 100vh;
+}
+
+.page-title {
+  margin: 0 0 4px;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+}
+
+.page-sub {
+  margin: 0 0 20px;
+  font-size: 14px;
+  color: var(--el-text-color-regular);
+}
+
+.mb-0 {
+  margin-bottom: 0;
+}
+
+.json-preview {
+  margin-top: 12px;
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-all;
+  color: var(--el-text-color-regular);
+}
+
+.header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.theme-switch {
+  flex-shrink: 0;
+}

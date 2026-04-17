@@ -29,6 +29,7 @@
 - JDK 17+
 - Maven 3.8+
 - Docker Desktop（用于 Compose 起 MySQL / Redis / RabbitMQ / Nacos）
+- **可选前端**：Node.js 18+（用于 Vue 3 演示页）
 
 ## 1. 启动基础设施
 
@@ -41,7 +42,7 @@ docker compose up -d
 等待 Nacos 控制台可访问：<http://127.0.0.1:8848/nacos>（默认账号密码 `nacos/nacos`）。  
 RabbitMQ 管理界面：<http://127.0.0.1:15672>（`guest/guest`）。
 
-MySQL：`127.0.0.1:3306`，用户 `root`，密码 `root`；首次启动脚本会创建 `user_db`、`order_db`、`product_db`。
+MySQL：`127.0.0.1:3307`（映射容器内 3306），用户 `root`，密码 `root`；首次启动脚本会创建 `user_db`、`order_db`、`product_db`。
 
 ## 2. 编译
 
@@ -88,7 +89,19 @@ Content-Type: application/json
 
 观察 **user-service** 控制台日志，应出现 `[异步] 模拟通知`；在 RabbitMQ 管理界面可看到队列与消息投递情况。
 
-## 5. 可选：把 JAR 打进 Docker
+## 5. Vue 3 演示页（可选）
+
+仓库内 `frontend` 为 **Vite + Vue 3 + Element Plus + Axios**：创建用户、查看商品、下单；HTTP 封装在 `frontend/src/api/http.js`。请求经开发服务器 **代理到网关 `8080`**（见 `frontend/vite.config.js`）。网关已配置 **CORS**，便于浏览器直接访问 API。
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+浏览器打开终端里提示的本地地址（一般为 <http://127.0.0.1:5173>）。需先按上文 **启动基础设施** 与 **四个 Java 服务**，否则页面会报错。页头右侧开关可切换 **浅色 / 深色**（写入 `localStorage` 键 `cluster_theme`；无记录时跟随系统偏好）。
+
+## 6. 可选：把 JAR 打进 Docker
 
 各模块已提供 `Dockerfile`，需在对应模块先 `mvn package` 再 `docker build`。若服务跑在容器内，需把环境变量中的 `127.0.0.1` 改为 Compose 服务名（如 `mysql`、`redis`、`rabbitmq`、`nacos`），并保证与 Nacos 注册 IP 可达（进阶：host 网络或统一 overlay 网络），此处不展开，避免新手被网络细节绊住。
 
@@ -97,11 +110,12 @@ Content-Type: application/json
 | 服务 | 端口 |
 |------|------|
 | gateway | 8080 |
+| Vue 演示页 (Vite dev) | 5173 |
 | user-service | 8081 |
 | product-service | 8082 |
 | order-service | 8083 |
-| MySQL | 3306 |
-| Redis | 6379 |
+| MySQL | 3307 |
+| Redis | 6380 |
 | RabbitMQ AMQP | 5672 |
 | RabbitMQ UI | 15672 |
 | Nacos | 8848 |
