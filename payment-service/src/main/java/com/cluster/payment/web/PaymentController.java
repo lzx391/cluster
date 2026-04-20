@@ -27,7 +27,7 @@ public class PaymentController {
     @PostMapping
     public ResponseEntity<?> pay(@Valid @RequestBody CreatePaymentRequest request) {
         try {
-            PaymentResponse body = paymentService.pay(request.orderId(), request.channel().trim().toUpperCase());
+            PaymentResponse body = paymentService.newPay(request.orderId(), request.channel().trim().toUpperCase());
             return ResponseEntity.status(HttpStatus.CREATED).body(body);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
