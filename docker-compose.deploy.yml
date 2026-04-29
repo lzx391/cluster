@@ -1,0 +1,125 @@
+name: cluster-deploy
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: cluster-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: user_db
+    ports:
+      - "3307:3306"
+    volumes:
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d:ro
+      - mysql_data:/var/lib/mysql
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: cluster-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+
+  nacos:
+    image: nacos/nacos-server:v2.3.2
+    container_name: cluster-nacos
+    environment:
+      MODE: standalone
+      PREFER_HOST_MODE: hostname
+      JVM_XMS: 256m
+      JVM_XMX: 512m
+    ports:
+      - "8848:8848"
+      - "9848:9848"
+
+  user-service:
+    image: 1933886418/user-service:v2.0.0
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_USER: root
+      MYSQL_PASSWORD: root
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: guest
+      RABBITMQ_PASSWORD: guest
+      NACOS_SERVER_ADDR: nacos:8848
+    depends_on:
+      - mysql
+      - rabbitmq
+      - nacos
+
+  product-service:
+    image: 1933886418/product-service:v2.0.0
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_USER: root
+      MYSQL_PASSWORD: root
+      NACOS_SERVER_ADDR: nacos:8848
+    depends_on:
+      - mysql
+      - nacos
+
+  order-service:
+    image: 1933886418/order-service:v2.0.0
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_USER: root
+      MYSQL_PASSWORD: root
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: guest
+      RABBITMQ_PASSWORD: guest
+      NACOS_SERVER_ADDR: nacos:8848
+    depends_on:
+      - mysql
+      - rabbitmq
+      - nacos
+
+  payment-service:
+    image: 1933886418/payment-service:v2.0.0
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_USER: root
+      MYSQL_PASSWORD: root
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: guest
+      RABBITMQ_PASSWORD: guest
+      NACOS_SERVER_ADDR: nacos:8848
+    depends_on:
+      - mysql
+      - rabbitmq
+      - nacos
+
+  gateway:
+    image: 1933886418/gateway:v2.0.0
+    environment:
+      NACOS_SERVER_ADDR: nacos:8848
+    depends_on:
+      - nacos
+      - user-service
+      - product-service
+      - order-service
+      - payment-service
+
+  nginx:
+    image: 1933886418/cluster-nginx:v2.0.0
+    container_name: cluster-nginx
+    ports:
+      - "18080:80"
+      - "18443:443"
+    volumes:
+      - ./docker/nginx/certs:/etc/nginx/certs:ro
+    depends_on:
+      - gateway
+
+volumes:
+  mysql_data:

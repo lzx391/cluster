@@ -130,6 +130,36 @@ npm run dev
 
 各模块已提供 `Dockerfile`，需在对应模块先 `mvn package` 再 `docker build`。若服务跑在容器内，需把环境变量中的 `127.0.0.1` 改为 Compose 服务名（如 `mysql`、`redis`、`rabbitmq`、`nacos`），并保证与 Nacos 注册 IP 可达（进阶：host 网络或统一 overlay 网络），此处不展开，避免新手被网络细节绊住。
 
+## 7. 云端上线（项目解耦：独立 Nginx + 端口错开）
+
+本项目提供独立 Nginx 镜像（`1933886418/cluster-nginx:v2.0.0`），用于与旧项目解耦部署。
+
+仓库已提供：
+
+- `Dockerfile.nginx` + `nginx/default.conf`：`/cluster/** -> gateway /api/**`
+- `docker-compose.deploy.yml`：包含本项目完整服务 + 独立 Nginx
+- `deploy/nginx/cluster.location.conf`：若你要让旧项目入口层转发到本项目，可直接复用该片段
+
+端口规划（与旧项目错开）：
+
+- `18080` -> 本项目 Nginx 的 `80`
+- `18443` -> 本项目 Nginx 的 `443`
+
+证书放置（服务器）：
+
+- `docker/nginx/certs/catandppoker.asia.pem`
+- `docker/nginx/certs/catandppoker.asia.key`
+
+线上发布步骤（服务器）：
+
+1. `git pull`
+2. `docker compose -f docker-compose.deploy.yml pull`
+3. `docker compose -f docker-compose.deploy.yml up -d`
+
+如果外网仍只开放 `443`，则在你最外层入口 Nginx 加一段转发：
+
+- `location /cluster/ { proxy_pass https://127.0.0.1:18443/cluster/; ... }`
+
 ## 端口汇总
 
 | 服务 | 端口 |

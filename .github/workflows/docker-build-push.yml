@@ -22,18 +22,27 @@ jobs:
           - name: gateway
             context: gateway
             dockerfile: gateway/Dockerfile
+            build_jar: true
           - name: user-service
             context: user-service
             dockerfile: user-service/Dockerfile
+            build_jar: true
           - name: product-service
             context: product-service
             dockerfile: product-service/Dockerfile
+            build_jar: true
           - name: order-service
             context: order-service
             dockerfile: order-service/Dockerfile
+            build_jar: true
           - name: payment-service
             context: payment-service
             dockerfile: payment-service/Dockerfile
+            build_jar: true
+          - name: cluster-nginx
+            context: .
+            dockerfile: Dockerfile.nginx
+            build_jar: false
 
     steps:
       - name: Checkout
@@ -47,6 +56,7 @@ jobs:
           cache: maven
 
       - name: Build JAR for ${{ matrix.name }}
+        if: ${{ matrix.build_jar }}
         run: mvn -B -pl ${{ matrix.context }} -am clean package -DskipTests
 
       - name: Docker Hub login
